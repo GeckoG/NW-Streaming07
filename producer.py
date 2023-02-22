@@ -3,7 +3,7 @@ pip3 install cloudscraper requests readchar pwinput
 export EMAIL=<your garmin email>
 export PASSWORD=<your garmin password>
 """
-import datetime
+
 import json
 import logging
 import os
