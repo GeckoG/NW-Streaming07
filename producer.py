@@ -26,9 +26,9 @@ from garminconnect import (
     GarminConnectTooManyRequestsError,
 )
 
-# Configure debug logging
-logging.basicConfig(level=logging.DEBUG)
-logging.basicConfig(level=logging.INFO)
+# Configure debug logging - uncomment if something breaks to see where errors are
+#logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Setup Variables
