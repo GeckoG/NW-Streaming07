@@ -11,8 +11,8 @@ from twilio.rest import Client
 
 def send_text(text):
     # Set up variables for Twilio account - these should be unique to you
-    account_sid = 'AC28da95f071870269472836f0eaee7cc1'
-    auth_token = '76bdc916c197d84f74fa8bccbf296dfc'
+    account_sid = 'xxxxxx'
+    auth_token = 'xxxxxx'
 
     # Set up Twilio client
     client = Client(account_sid, auth_token)
