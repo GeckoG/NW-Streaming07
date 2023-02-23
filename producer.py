@@ -1,7 +1,12 @@
 """
-pip3 install cloudscraper requests readchar pwinput
-export EMAIL=<your garmin email>
-export PASSWORD=<your garmin password>
+This program logs into Garmin Connect and checks the most recent activity uploaded.
+If the activity is new, the program will create a message alert and send it to a queue.
+The program will check for new activities every 5 minutes.
+
+Author: Matt Goeckel
+Date:   22 February 2023
+
+init_api & get_credentials methods from 'Garmin Connect API Demo' by cyberjunky
 """
 
 import json
@@ -22,11 +27,11 @@ from garminconnect import (
 )
 
 # Configure debug logging
-# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Load environment variables if defined
+# Setup Variables
 email = os.getenv("EMAIL")
 password = os.getenv("PASSWORD")
 api = None
@@ -35,7 +40,7 @@ activityId = 1
 previous_activityId = 0
 
 def get_credentials():
-    """Get user credentials."""
+    # Ask user to input their Garmin Connect login credentials
     email = input("Login e-mail: ")
     password = pwinput.pwinput(prompt='Password: ')
 
@@ -56,8 +61,6 @@ def init_api(email, password):
 
             # Use the loaded session for initializing the API (without need for credentials)
             api = Garmin(session_data=saved_session)
-
-            # Login using the
             api.login()
 
     except (FileNotFoundError, GarminConnectAuthenticationError):
@@ -114,15 +117,25 @@ while True:
     if not api:
         api = init_api(email, password)
     
+    # Get the most recently recorded activity, store the ID as a variable
     activity = api.get_last_activity()
     activityId = activity["activityId"]
+
+    # If the ID is the same as the previous loop, no new activity has been recorded
+    # If the ID is different, it is a new activity and an alert should be sent, so execute this loop
     if activityId != previous_activityId:
-        user = api.get_full_name()
-        activityType = activity["activityType"]
-        typeKey = activityType["typeKey"]
-        distance = round((activity["distance"] / 1609), 2)
-        duration = round(activity["elapsedDuration"] / 60)
+        # Get some info from the activity json for our message.
+        user = api.get_full_name()                          #Username
+        activityType = activity["activityType"]             
+        typeKey = activityType["typeKey"]                   #Activity Type
+        distance = round((activity["distance"] / 1609), 2)  #Distance in Miles
+        duration = round(activity["elapsedDuration"] / 60)  #Time in Minutes
+        # Build our message
         message = (f'{user} just completed a {typeKey} activity. They went {distance} miles in {duration} minutes.')
+        # Send the message on the queue
         send_message('localhost', 'garmin', message)
+        # Now that we're done with this activity, we set it to our previous_activityId
         previous_activityId = activityId
-        time.sleep(60)
+        # Garmin has strict rate limiting, so we set the sleep timer to 5 minutes or else Garmin will return a 'Forbidden url' error.
+        # Also, we don't need the notification IMMEDIATELY after finishing, within 5 minutes will be fine.
+        time.sleep(300)

@@ -1,12 +1,18 @@
+'''
+This program receives messages from a queue, and sends them as text messages to a number.
+To use, input your Twilio credentials for 'account_sid' and 'auth_token', along with the desired phone number in the 'send_text()' method
+
+Author: Matt Goeckel
+Date:   22 February 2023
+'''
 import pika
 import sys
-import csv
 from twilio.rest import Client
 
-# Load Twilio account credentials from credentials.csv
 def send_text(text):
+    # Set up variables for Twilio account - these should be unique to you
     account_sid = 'AC28da95f071870269472836f0eaee7cc1'
-    auth_token = 'd436455655581b005776d5d169b68010'
+    auth_token = '76bdc916c197d84f74fa8bccbf296dfc'
 
     # Set up Twilio client
     client = Client(account_sid, auth_token)
@@ -28,13 +34,13 @@ def send_text(text):
 
 # define a callback function to be called when a message is received
 def callback(ch, method, properties, body):
-    """ Define behavior on getting a message."""
     # decode the binary message body to a string
     textmessage = body.decode()
     print(f" [x] Received: {textmessage}")
     # acknowledge the message was received and processed 
     # (now it can be deleted from the queue)
     ch.basic_ack(delivery_tag=method.delivery_tag)
+    # Use the send_text method to send the text alert
     send_text(textmessage)
 
 
@@ -72,7 +78,7 @@ def receive_message(hn: str = "localhost", qn: str = "task_queue"):
         channel.basic_consume( queue=qn, on_message_callback=callback)
 
         # print a message to the console for the user
-        print(" [*] Ready for work. To exit press CTRL+C")
+        print(" [*] Ready to receive messages. To exit press CTRL+C")
 
         # start consuming messages via the communication channel
         channel.start_consuming()
@@ -92,9 +98,6 @@ def receive_message(hn: str = "localhost", qn: str = "task_queue"):
         connection.close()
 
 
-# Standard Python idiom to indicate main program entry point
-# This allows us to import this module and use its functions
-# without executing the code below.
 # If this is the program being run, then execute the code below
 if __name__ == "__main__":
     # call the main function with the information needed
